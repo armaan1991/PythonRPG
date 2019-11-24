@@ -17,6 +17,8 @@ print('')
 print('')
 sleep(1)
 
+# adding some comment
+
 #$str,defense,agi,intel,hitchance,critchance,critmulti
 night_elf = [8,10,5,10,80,10,1.5]
 shadow_assasin = [2,10,15,10,90,10,1.5]
