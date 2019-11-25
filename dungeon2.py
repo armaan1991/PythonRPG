@@ -198,21 +198,31 @@ def main():
         # level_handler() #Create a function that progresses the game across levels 1-5
         # inventory allow player to change inventory
 
-    def wealth_drop(enemy, level):  # complete this
-        coin_drop_chance = int(enemy.lootchance_coins)
+    def monster_drop(enemy): #complete this
+        global level
+        coin_drop_chance = int(enemy.lootchance_coins) #takes the chance of the monster to drop coins
         if roll() <= coin_drop_chance:
-            coin_drops_level = coin_list.loc[coin_list["Level"] == level]
-            coin_roll = roll()
-            coin_drops = coin_drops_level.loc[
-                coin_drops_level["Rarity"] >= coin_roll
-            ]
-            coin_drops = coin_drops.sample()
-            hero.coins += int(coin_drops["Amount"])
-            print("The monster drops " + coin_drops.iloc[0, 0] + "coins")
+            coin_drops_level = coin_list.loc[coin_list['Level'] == level] #gets all dropabble coins for the current level
+            coin_roll = roll() - hero.greed #rolls to see which drops you can get, factors greed
+            coin_drops = coin_drops_level.loc[coin_drops_level['Rarity'] >= coin_roll] #makes a df of all dropabble items
+            coin_drops = coin_drops.sample() #takes a random drop from above dataframe
+            hero.coins += int(coin_drops['Amount']) #adds coins to hero's inventory
+            print('The monster drops ' + str(coin_drops.iloc[0,0]) + ' coins')
+            print('Current coins: ' + str(hero.coins))
 
-            # print('The monster drops ' + str(coin_drops['Amount']) + ' coins')
-            print("Current coins: " + str(hero.coins))
-
+        wealth_drop_chance = int(enemy.lootchance_wealth) #takes the chance of the monster to drop coins    
+        if roll() <= wealth_drop_chance:
+            wealth_drops_level = wealth_list.loc[wealth_list['Level'] == level] #gets all dropabble coins for the current level
+            wealth_roll = random.randint(1,101) - hero.greed #rolls to see which drops you can get, factors greed
+            wealth_drops = wealth_drops_level.loc[wealth_drops_level['Rarity'] >= wealth_roll] #makes a df of all dropabble items
+            if wealth_drops.empty:
+                pass
+            else:
+                wealth_drops = wealth_drops.sample() #takes a random drop from above dataframe
+                hero.wealth.append(wealth_drops.iloc[0,0])
+                print('The monster drops a ' + str(wealth_drops.iloc[0,0]))
+                print(hero.wealth)
+            
     def potion(hero, enemy):
         while (
             hero.pots["small"] > 0

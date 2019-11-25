@@ -3,7 +3,7 @@ import random
 from time import sleep
 
 
-def write_cool(text, sleep_time=0.05):
+def write_cool(text, sleep_time=0.03):
     for c in text:
         sys.stdout.write(c)
         sys.stdout.flush()
