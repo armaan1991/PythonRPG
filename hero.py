@@ -50,7 +50,7 @@ class Hero:
         self.hp += 10
 
     def status(self):
-        print(self.name + " the " + self.char_class)
+        print("{} the {}".format(self.name, self.hero_class))
         print("HP: {}/{}".format(self.health, self.hp))
         print("Current Level {}".format(level))
 
@@ -61,7 +61,7 @@ class Hero:
         print("      =  =  =  =  =   = =  =  =    = =")
         print("      =  ====  ====   ===  =  ===  ===")
         print("")
-        print(self.name + " the " + self.char_class)
+        print(self.name + " the " + self.hero_class)
         print("Died at level {}".format(level))
         print("Score = " + str(self.wealth))
 
