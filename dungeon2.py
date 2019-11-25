@@ -3,8 +3,10 @@ import os
 import random
 import pandas as pd
 from time import sleep
+import numpy as np
 global enemy
 global level
+
 
 #Start game
 os.system('clear')
@@ -17,8 +19,6 @@ print('')
 print('')
 sleep(1)
 
-# adding some comment
-
 #$str,defense,agi,intel,hitchance,critchance,critmulti
 night_elf = [8,10,5,10,80,10,1.5]
 shadow_assasin = [2,10,15,10,90,10,1.5]
@@ -27,6 +27,7 @@ level = 1
 room = ''
 monsterlist = pd.read_csv('dog_monsters_v1.csv') #importing all the monsters of the game
 wealth_list = pd.read_csv('dog_wealth_v1.csv') #importing all wealth drops of the game
+coin_list = pd.read_csv('dog_coins_v1.csv') #importing all coin drops of the game
 
 class Hero:
 	def __init__(self,name,strength,defense,agility,intel,hit_chance,crit_chance,crit_multi): #, hit_chance, crit_chance, crit_multi, defense, intel, agility, looting, greed)
@@ -49,6 +50,7 @@ class Hero:
 		self.gear_wielded = []
 		self.wealth = []
 		self.pots = {'small': 1, 'medium': 0, 'large': 0}
+		self.coins = 0
 
 	def levelup(self):
 		self.strength +=1
@@ -222,13 +224,13 @@ def fight(hero, enemy):
 		if hero.health <= 0:
 			death() #handles death
 		elif enemy.health <= 0:
-			battle_room_success() #code a common function for clearing battle room that levels you up, drops loot, resets room handler, takes you to next level
+			battle_room_success(enemy) #code a common function for clearing battle room that levels you up, drops loot, resets room handler, takes you to next level
 		else:
 			battle_choices(hero,enemy)
 
-def battle_room_success():
+def battle_room_success(enemy):
 	global level 
-	t5 = ('You have cleared level ' +str(level) + '!')
+	t5 = ('You have cleared level ' +str(level) + '!' + '\n')
 	for character in t5:
 		sys.stdout.write(character)
 		sys.stdout.flush()
@@ -237,16 +239,34 @@ def battle_room_success():
 	print(' ')
 	input('Press any key to continue...')
 	status()
-	hero.greed += 0.1
-	print('Greed bonus:' + hero.greed)
-	wealth_drop() #pending
+	hero.greed += 0.10
+	print('\n' + 'Greed bonus has increased by 10%')
+	wealth_drop(enemy) #pending
 	#potion_drop create a potion drop function which drops heals across rooms based on room type and level
 	#level_handler() #Create a function that progresses the game across levels 1-5
 	#inventory allow player to change inventory
 	
-def wealth_drop(): #complete this
+def wealth_drop(enemy): #complete this
 	global level
-	
+	coin_drop_chance = int(enemy.lootchance_coins)
+	roll = random.randint(1,101)
+	if roll <= coin_drop_chance:
+		coin_drops_level = coin_list.loc[coin_list['Level'] == level]
+		coin_roll = random.randint(1,101)
+		coin_drops = coin_drops_level.loc[coin_drops_level['Rarity'] >= coin_roll]
+		coin_drops = coin_drops.sample()
+		a = coin_drops.iloc
+		hero.coins += int(coin_drops['Amount'])
+		print('The monster drops ' + coin_drops.iloc[0,0] + 'coins')
+		
+
+		#print('The monster drops ' + str(coin_drops['Amount']) + ' coins')
+		print('Current coins: ' + str(hero.coins))
+
+def roll():
+	roll = random.randint(1,101)
+	return roll
+
 
 def death():
 	os.system('clear')
@@ -365,6 +385,9 @@ class Monster:
 		self.crit_multi = monster_data['Crit Multi']
 		self.defense = monster_data['Defense']
 		self.health = self.hp
+		self.lootchance_coins = monster_data['Coins']
+		self.lootchance_wealth = monster_data['Wealth']
+		self.lootchance_gear = monster_data['Gear']
 
 
 
