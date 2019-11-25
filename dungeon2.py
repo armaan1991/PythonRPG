@@ -21,6 +21,7 @@ def main():
     print("")
     print("")
     sleep(1)
+    level = 1
 
     wealth_list = pd.read_csv(
         "dog_wealth_v1.csv"
@@ -62,14 +63,14 @@ def main():
                 # call Aeon chamber function
             else:
                 print("You walk into a wall and hurt yourself..." + "\n")
-                hero.health -= 1
+                hero.hp -= 1
                 # handle death possibility
 
     def battleroom():
         t4 = "You enter a dim cave and hear something sinister stir in the shadows..."
         write_cool(t4, 0.02)
         enemy = (
-            Monster.monster_spawn()
+            Monster.monster_spawn(level)
         )  # stored the return value (class object) of the function in a new variale to be reused in fight function
         print("\n" + "You encounter some dangerous looking " + enemy.name)
         battle_choices(hero, enemy)
@@ -105,9 +106,9 @@ def main():
         print(
             enemy.name
             + " health: "
-            + str(enemy.health)
-            + "/"
             + str(enemy.hp)
+            + "/"
+            + str(enemy.max_hp)
             + "\n"
         )
         if initiative > 50:
@@ -122,7 +123,7 @@ def main():
                     )
                 )
                 print("You hit for {} damage".format(attack_damage))
-                enemy.health -= attack_damage
+                enemy.hp -= attack_damage
             else:
                 print("You swing wildly and miss...")
             enemy_hit = roll()
@@ -139,7 +140,7 @@ def main():
                     )
                 )
                 print("You take {} damage".format(enemy_damage) + "\n")
-                hero.health -= enemy_damage
+                hero.hp -= enemy_damage
             else:
                 print("You successfully dodge the attack" + "\n")
         else:
@@ -157,7 +158,7 @@ def main():
                     )
                 )
                 print("You take {} damage".format(enemy_damage) + "\n")
-                hero.health -= enemy_damage
+                hero.hp -= enemy_damage
             else:
                 print("You successfully dodge the attack" + "\n")
             hero_hit = roll()
@@ -171,12 +172,12 @@ def main():
                     )
                 )
                 print("You hit for {} damage".format(attack_damage) + "\n")
-                enemy.health -= attack_damage
+                enemy.hp -= attack_damage
             else:
                 print("You swing wildly and miss..." + "\n")
-        if hero.health <= 0:
+        if hero.hp <= 0:
             hero.death()  # handles death
-        elif enemy.health <= 0:
+        elif enemy.hp <= 0:
             battle_room_success(
                 hero, enemy
             )  # code a common function for clearing battle room that levels you up, drops loot, resets room handler, takes you to next level
@@ -184,7 +185,6 @@ def main():
             battle_choices(hero, enemy)
 
     def battle_room_success(hero, enemy):
-        global level
         t5 = "You have cleared level " + str(level) + "!" + "\n"
         write_cool(t5, 0.02)
         print("Your greed bonus has increased")
@@ -237,11 +237,11 @@ def main():
 
             if consume_pot == "1":
                 if hero.pots["small"] > 0:
-                    hero.health += 5
+                    hero.hp += 5
                     print("You consume a potion and heal 5 HP")
                     hero.pots["small"] = hero.pots["small"] - 1
-                    if hero.health > hero.hp:
-                        hero.health = hero.hp
+                    if hero.hp > hero.hp:
+                        hero.hp = hero.hp
                     battle_choices(hero, enemy)
                 else:
                     print("You do not have any small potions!")
@@ -250,11 +250,11 @@ def main():
 
             elif consume_pot == "2":
                 if hero.pots["medium"] > 0:
-                    hero.health += 15
+                    hero.hp += 15
                     print("You consume a potion and heal 15 HP")
                     hero.pots["medium"] = hero.pots["medium"] - 1
-                    if hero.health > hero.hp:
-                        hero.health = hero.hp
+                    if hero.hp > hero.hp:
+                        hero.hp = hero.hp
                     battle_choices(hero, enemy)
                 else:
                     print("You do not have any medium potions!")
@@ -262,11 +262,11 @@ def main():
 
             elif consume_pot == "3":
                 if hero.pots["large"] > 0:
-                    hero.health += 30
+                    hero.hp += 30
                     print("You consume a potion and heal 30 HP")
                     hero.pots["large"] = hero.pots["large"] - 1
-                    if hero.health > hero.hp:
-                        hero.health = hero.hp
+                    if hero.hp > hero.hp:
+                        hero.hp = hero.hp
                     battle_choices(hero, enemy)
                 else:
                     print("You do not have any large potions!")
@@ -310,10 +310,10 @@ def main():
                     + str(enemy_damage)
                     + " damage"
                 )
-                hero.health -= enemy_damage
+                hero.hp -= enemy_damage
                 hero.status()
                 battle_choices(hero, enemy)
-                if hero.health <= 0:
+                if hero.hp <= 0:
                     hero.death()
             else:
                 print("You dodge an incoming attack" + "\n")
