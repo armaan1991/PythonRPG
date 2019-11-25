@@ -1,12 +1,12 @@
-Name,Level,Strength,HP,Damage,Hit Chance,Crit Chance,Crit Multi,Defense
-Flesh bugs,1,8,26,16,90,10,2,10
-Dungeon rats,1,10,30,15,80,20,1.5,10
-Blood moles,1,12,34,14,70,25,2.5,10
-Dark bats,3,28,66,26,89,15,2,20
-Rock scorpions,3,30,70,24,85,20,2,15
-Feral dogs,3,32,74,22,90,15,4,10
-Rock giants,4,48,106,40,90,50,1.5,25
-Wild ogres,4,50,110,38,85,25,2.5,30
-Night wolves,4,52,114,36,95,25,3,30
-Undead Mummys,4,54,118,34,94,30,6,10
-Forest Trolls,4,55,120,32,98,20,6,30
+Name,Level,Strength,HP,Damage,Hit Chance,Crit Chance,Crit Multi,Defense,Coins,Wealth,Gear
+Flesh bugs,1,8,26,6,0.9,0.1,2,0.1,100,10,100
+Dungeon rats,1,10,30,5,0.8,0.2,1.5,0.1,100,10,100
+Blood moles,1,12,34,4,0.7,0.25,2.5,0.1,100,10,100
+Dark bats,3,28,66,16,0.8,0.15,2,0.2,80,20,75
+Rock scorpions,3,30,70,14,0.85,0.2,2,0.15,80,20,75
+Feral dogs,3,32,74,12,0.9,0.15,4,0.1,80,20,75
+Rock giants,4,48,106,30,0.9,0.5,1.5,0.25,100,40,0
+Wild ogres,4,50,110,28,0.85,0.25,2.5,0.3,100,40,0
+Night wolves,4,52,114,26,0.95,0.25,3,0.3,100,40,0
+Undead Mummys,4,54,118,24,0.94,0.3,6,0.1,100,40,0
+Forest Trolls,4,55,120,22,0.98,0.2,6,0.3,100,40,0
