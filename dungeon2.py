@@ -163,7 +163,7 @@ def battle_choices(hero, enemy):
 
 def fight(hero, enemy):
     initiative = roll() + hero.agility
-    hero.status()
+    hero.print_status()
     print("\n" + "\n" + "--------battle-------")
     print(
         enemy.name
@@ -250,7 +250,7 @@ def battle_room_success(hero, enemy):
     hero.greed += 10
     print("\n" + "Greed bonus has increased! You have higher chances of finding wealth...")
     monster_drop(enemy,hero)  # done for coins and wealth
-    hero.status()
+    hero.print_status()
 
     # level_handler() #Create a function that progresses the game across levels 1-5
     # inventory allow player to change inventory
@@ -345,7 +345,7 @@ def flee(hero, enemy):
                 + " damage"
             )
             hero.hp -= enemy_damage
-            hero.status()
+            hero.print_status()
             battle_choices(hero, enemy)
             if hero.hp <= 0:
                 hero.death()
