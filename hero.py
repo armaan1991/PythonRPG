@@ -1,5 +1,12 @@
 import os
-from utils import print_slow, input_str, roll
+from utils import (
+    print_slow,
+    input_str,
+    roll,
+    input_int,
+    print_options,
+    clear_screen,
+)
 import pandas as pd
 
 # $str,defense,agi,intel,hitchance,critchance,critmulti
@@ -12,6 +19,17 @@ level = 1
 
 
 class Hero:
+    # class attributes
+    _inventory_options = {
+        1: "coins",
+        2: "weapons",
+        3: "helms",
+        4: "chest armour",
+        5: "leg armour",
+        6: "shields",
+        7: "back",
+    }
+
     def __init__(
         self,
         name,
@@ -76,7 +94,6 @@ class Hero:
     ###########
     # GETTERS #
     ###########
-
     def get_equipped(self, category):
         self._check_equipped(category)
         return self.equipped[category]
@@ -163,10 +180,95 @@ class Hero:
             self.inventory.get(category).append(old_item)
         print("Inventory:", self.inventory)
 
+    #####################
+    # INVENTORY METHODS #
+    #####################
+
+    # options, view category and view inventory need a rework
+    # because they're doing some super dangerous stuff like cyclical
+    # calls. i.e. view category calls options which calls view category
+    # which calls view inventory which calls view category etc.
+    # we want clean code, single flat call, with a clear result
+    def _options(self, item, category, action):
+        options_map = {1: "equip", 2: "drop", 3: "back"}
+        while True:
+            old_item = self.get_equipped(category)
+            print_slow("Currently equipped: {} \n".format(old_item))
+            print_slow("Selected item : {} \n".format(item))
+            print_options(options_map)
+            answer = options_map[input_int()]
+            if answer == "equip":
+                self.equip(item, category, old_item)
+                self.view_category(action, category)
+                break
+            elif answer == "drop":
+                while True:
+                    print_slow("Are you sure you want to drop item? \n")
+                    print_slow("1. Yes \n" + "2. No \n")
+                    answer = input_int()
+                    if answer == 1:
+                        self.drop(item, category)
+                        self._options(item, category, action)
+                    elif answer == 2:
+                        self._options(item, category, action)
+                        break
+                    else:
+                        print_slow("Please choose a valid option")
+                        continue
+
+    def view_category(self, action, category):
+        self.print_inventory(category)
+        # Need to better understand what the point of this
+        # function is, the current implementation is still messy
+        # Also, this should just be a function in the hero class
+        # Since you're making a view of a hero attribute
+        n_invent = self.get_n_inventory(category) + 1
+        while True:
+            response = input_int()
+            if response < n_invent:
+                item = self.inventory[category][response - 1]
+                clear_screen()
+                self._options(item, category, action)
+                break
+            elif response == n_invent:
+                clear_screen()
+                self.view_inventory()
+                break
+            else:
+                print_slow("Choose valid option")
+                continue
+
+    def view_inventory(self):
+        while True:
+            clear_screen()
+            print("Inventory:")
+            print_options(self._inventory_options)
+            action = input_int()
+            if action == 1:
+                print_slow(
+                    "You have {} Coins in your purse\n".format(
+                        self.inventory["Coins"]
+                    )
+                )
+                break
+            elif action > 1 and action < 7:
+                clear_screen()
+                print_slow(
+                    "You have chosen to see {} : {} \n".format(
+                        action, self._inventory_options.get(action)
+                    )
+                )
+                self.view_category(action, self._inventory_options.get(action))
+            elif action == 7:
+                clear_screen()
+                break
+            else:
+                print_slow("Choose valid option")
+                continue
+
     #################
     # CLASS METHODS #
     #################
-
     @classmethod
     def _test_hero(cls):
         return cls("test", "class", 10, 10, 10, 10, 0.9, 0.2, 3)

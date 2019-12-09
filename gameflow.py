@@ -3,7 +3,6 @@ from time import sleep
 from utils import print_slow, input_int, print_options
 from hero import Hero
 from rooms import room
-from inventory import view_inventory
 
 
 def start():
@@ -46,7 +45,7 @@ def main_game_loop(hero):
         choice = base_choices()
         while choice != "explore":
             if choice == "inventory":
-                view_inventory(hero)
+                hero.view_inventory()
                 choice = base_choices()
             if choice == "quit":
                 quit("Only cowards run from glory...")
