@@ -4,28 +4,27 @@ import random
 
 
 class Monster:
+    # importing all the monsters of the game
+    monsterlist = pd.read_csv( "dog_monsters_v1.csv")  
+
     def __init__(self, monster_data):
         self.name = monster_data["Name"]
         self.level = monster_data["Level"]
-        self.max_hp = monster_data["HP"]
+        self.hp = monster_data["HP"]
         self.damage = monster_data["Damage"]
         self.hit_chance = monster_data["Hit Chance"]
         self.crit_chance = monster_data["Crit Chance"]
         self.crit_multi = monster_data["Crit Multi"]
         self.defense = monster_data["Defense"]
-        self.hp = self.max_hp
+        self.health = self.hp
         self.lootchance_coins = monster_data["Coins"]
         self.lootchance_wealth = monster_data["Wealth"]
         self.lootchance_gear = monster_data["Gear"]
 
     @classmethod
     def monster_spawn(cls, level=1):
-        monsterlist = pd.read_csv(
-            "dog_monsters_v1.csv"
-        )  # importing all the monsters of the game
-        monster_options = monsterlist.loc[
-            monsterlist["Level"] == level
-        ]  # Makes a dataframe of monsters in current level from main dataframe
+        # Makes a dataframe of monsters in current level from main dataframe
+        monster_options = cls.monsterlist.loc[cls.monsterlist["Level"] == level]  
         monster_random = random.randint(
             0, (len(monster_options) - 1)
         )  # Generates a random number to pick the monster
