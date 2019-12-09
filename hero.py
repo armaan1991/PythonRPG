@@ -275,50 +275,40 @@ class Hero:
 
     @classmethod
     def hero_setup(cls):
-        t1 = "What is your ancient name?" + "\n"
-        print_slow(t1)
-
+        print_slow("What is your ancient name?\n")
         playername = input_str()
 
         # assigning the hero class based on user input
-        t2 = "Choose from any of the below roles for today!" + "\n"
-        print_slow(t2)
+        print_slow("Choose from any of the below roles for today!\n")
 
-        print("Press 1 to play as NIGHT ELF")
-        print("Press 2 to play as SHADOW ASSASSIN")
-        print("Press 3 to play as BLOOD PRIEST")
-        print("\n")
-
-        playerhero = 0
-        while playerhero == 0:
-            playerhero = input_str()
-            if playerhero == "1":
-                char_class = "Night elf"
+        hero_options = {
+            1: "night elf",
+            2: "shadow assassin",
+            3: "blood priest",
+        }
+        print_options(hero_options)
+        char_class = False
+        while not char_class:
+            char_class = hero_options.get(input_int())
+            if char_class == "night elf":
+                char = night_elf
                 # Create the hero object
-                hero = cls(playername, char_class, *night_elf)
-                starting_weapon = {"Weapons": "Elven Bow"}
-                hero.equipped.update(starting_weapon)
-                print(hero.name + " the " + "Night elf has entered the game")
-
-            elif playerhero == "2":
-                char_class = "Shadow assasin"
-                hero = cls(playername, char_class, *shadow_assasin)
-                starting_weapon = {"Weapons": "Midnight Dagger"}
-                hero.equipped.update(starting_weapon)
-                print(
-                    hero.name + " the " + "Shadow assasin has entered the game"
-                )
-
-            elif playerhero == "3":
-                char_class = "Blood priest"
-                hero = cls(playername, char_class, *blood_priest)
-                starting_weapon = {"Weapons": "Warlock Wand"}
-                hero.equipped.update(starting_weapon)
-                print(
-                    hero.name + " the " + "blood priest has entered the game"
-                )
-
+                starting_weapon = {"weapons": "Elven Bow"}
+            elif char_class == "shadow assassin":
+                char = shadow_assasin
+                starting_weapon = {"weapons": "Midnight Dagger"}
+            elif char_class == "blood priest":
+                char = blood_priest
+                starting_weapon = {"weapons": "Warlock Wand"}
             else:
-                print("Please choose from the available roles!" + "\n")
+                print("Please choose from the available roles!\n")
                 playerhero = 0
+
+        hero = cls(playername, char_class, *char)
+        hero.equipped.update(starting_weapon)
+        print(
+            "{} the {} has entered the game".format(
+                hero.name, playerhero.capitalize()
+            )
+        )
         return hero
