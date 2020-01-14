@@ -2,328 +2,355 @@ import os
 import random
 import pandas as pd
 from time import sleep
-from utils import write_cool, roll
+from utils import print_slow, roll, input_int, print_options
 from hero import Hero
 from monster import Monster
+global lEVEL
 
-global enemy
-global level
+WEALTH_LIST = pd.read_csv("dog_wealth_v1.csv")
+COIN_LIST = pd.read_csv("dog_coins_v1.csv")
+WEAPON_LIST = pd.read_csv("dog_weapons_v1.csv")
+LEVEL = 1
+
+def wealth_drop(enemy, hero):
+    level = LEVEL
+    if roll() <= int(enemy.lootchance_wealth):
+        wealth_level = WEALTH_LIST.loc[WEALTH_LIST['Level'] == level] #gets all dropabble wealth for the current level
+        wealth_roll = roll() - hero.greed #rolls to see which drops you can get, factors greed
+        wealth_drops = wealth_level.loc[wealth_level['Rarity'] >= wealth_roll] #makes a df of all dropabble wealth
+        if wealth_drops.empty:
+            return 0
+        wealth_drop = wealth_drops.sample()
+        print(wealth_drop.iloc[0]["Name"])
+        return (wealth_drop.iloc[0]["Name"])
+    return 0
 
 
-def main():
-    # Start game
-    os.system("clear")
-    print("_-_-_-_-__-_-_-_-__-_-_-_-__-_-_-_-__-_-_-_-_")
-    print("_-_-_-_-__-_-_-_-__-_-_-_-__-_-_-_-__-_-_-_-_")
-    print("_-_-_-_-_Welcome to DUNGEON OF GREED_-_-_-_-_")
-    print("_-_-_-_-__-_-_-_-__-_-_-_-__-_-_-_-__-_-_-_-_")
-    print("_-_-_-_-__-_-_-_-__-_-_-_-__-_-_-_-__-_-_-_-_")
-    print("")
-    print("")
-    sleep(1)
-    level = 1
+def monster_drop(enemy, hero): #everything that happens on monster death
+    coins_gained = coin_drop(enemy, hero)
+    if coins_gained:
+        print('The monster drops ' + str(coins_gained) + ' coins')
+        hero.coins += coins_gained
+    wealth_gained = wealth_drop(enemy,hero)
+    if wealth_gained: 
+        print('The monster drops some rare wealth! ' '\n' + 'You find a {}'.format(wealth_gained))
+        hero.wealth.append(wealth_gained)
+    # drops potions based on the room type and level
+    potion_drop(hero, 'battleroom')
+    weapon_gained = weapon_drop(enemy,hero)
+    if weapon_gained:
+        print('The monster drops a weapon!' + '\n' + 'You find a {}'.format(weapon_gained))
 
-    wealth_list = pd.read_csv(
-        "dog_wealth_v1.csv"
-    )  # importing all wealth drops of the game
-    coin_list = pd.read_csv(
-        "dog_coins_v1.csv"
-    )  # importing all coin drops of the game
 
-    # This function let's the play choose which room to enter
-    junction_history = [
-        "1",
-        "2",
-        "3",
-    ]  # handler to prevent room re-enter abuse. This should be reset after level clear.
+def coin_drop(enemy, hero): 
+    level = LEVEL
+    if roll() <= int(enemy.lootchance_coins):
+        coin_drops_level = COIN_LIST.loc[COIN_LIST['Level'] == level] #gets all dropabble coins for the current level
+        coin_roll = roll() - hero.greed #rolls to see which drops you can get, factors greed
+        coin_drops = coin_drops_level.loc[coin_drops_level['Rarity'] >= coin_roll] #makes a df of all dropabble items
+        if coin_drops.empty:
+            return 0
+        coin_drops = coin_drops.sample() #takes a random drop from above dataframe
+        return int(coin_drops['Amount']) #adds coins to hero's inventory
+    return 0
 
-    def junction():
-        t3 = "Which room would you to enter?" + "\n"
-        write_cool(t3, 0.03)
+def weapon_drop(enemy, hero):
+    level = LEVEL
+    if roll() <= int(enemy.lootchance_gear):
+        weapon_drops_level = WEAPON_LIST.loc[WEAPON_LIST['Level'] == level]
+        weapon_roll = roll() - hero.greed #rolls to see which drops you can get, factors greed
+        weapon_drops = weapon_drops_level.loc[weapon_drops_level['Rarity'] >= weapon_roll] #makes a df of all dropabble items
+        if weapon_drops.empty:
+            return 0
+        weapon_drops = weapon_drops.sample() #takes a random drop from above dataframe
+        print(weapon_drops.iloc[0]["Name"], weapon_drops.iloc[0]["Category"])
+        hero.pick_up(weapon_drops.iloc[0]["Name"], weapon_drops.iloc[0]["Category"])
+        return (weapon_drops.iloc[0]["Name"])
 
-        while len(junction_history) > 0:
-            if "1" in junction_history:
-                print("Press 1 to enter the Battle Room")
-            if "2" in junction_history:
-                print("Press 2 to enter the Trap Room")
-            if "3" in junction_history:
-                print("Press 3 to enter the Aeon Chamber")
-            room_choice = input("->")
-            if room_choice == "1":
-                junction_history.pop(0)
-                battleroom()
-                break
-            elif room_choice == "2":
-                junction_history.pop(1)
-                break
-                # call trap room function
-            elif room_choice == "3":
-                junction_history.pop(2)
-                break
-                # call Aeon chamber function
-            else:
-                print("You walk into a wall and hurt yourself..." + "\n")
-                hero.hp -= 1
-                # handle death possibility
+    return 0
 
-    def battleroom():
-        t4 = "You enter a dim cave and hear something sinister stir in the shadows..."
-        write_cool(t4, 0.02)
-        enemy = (
-            Monster.monster_spawn(level)
-        )  # stored the return value (class object) of the function in a new variale to be reused in fight function
-        print("\n" + "You encounter some dangerous looking " + enemy.name)
+def potion_drop(hero, room):
+    level = LEVEL
+    if room == ("battleroom"):
+        potion_types = ['small', 'medium']
+        chance = (level - 1) * 10
+        if roll() <= chance:
+            potion = random.choice(potion_types)
+            if potion == 'small':
+                hero.pots['small'] +=1
+                print('You pick up a small health potion')
+                return 1
+            elif potion == 'medium':
+                hero.pots['medium'] += 1
+                print('You pick up a medium health potion')
+                return 1
+        else:
+            return 0
+    if room == ("traproom"):
+        potion_types = ['medium', 'large']
+        chance = (level - 1) * 10
+        if roll() <= chance:
+            potion = random.choice(potion_types)
+            if potion == 'medium':
+                hero.pots['medium'] +=1
+                print('You pick up a medium health potion')
+                return 1
+            elif potion == 'large':
+                hero.pots['large'] += 1
+                print('You pick up a large health potion')
+                return 1
+        else:
+            return 0
+
+
+
+# This function let's the play choose which room to enter
+junction_history = ["1","2","3"]  # handler to prevent room re-enter abuse. This should be reset after level clear.
+
+def junction():
+    t3 = "Which room would you to enter?" + "\n"
+    print_slow(t3, 0.03)
+
+    while len(junction_history) > 0:
+        if "1" in junction_history:
+            print("Press 1 to enter the Battle Room")
+        if "2" in junction_history:
+            print("Press 2 to enter the Trap Room")
+        if "3" in junction_history:
+            print("Press 3 to enter the Aeon Chamber")
+        room_choice = input("->")
+        if room_choice == "1":
+            junction_history.pop(0)
+            battleroom()
+            break
+        elif room_choice == "2":
+            junction_history.pop(1)
+            break
+            # call trap room function
+        elif room_choice == "3":
+            junction_history.pop(2)
+            break
+            # call Aeon chamber function
+        else:
+            print("You walk into a wall and hurt yourself..." + "\n")
+            hero.health -= 1
+            # handle death possibility
+
+def battleroom():
+    t4 = "You enter a dim cave and hear something sinister stir in the shadows..."
+    print_slow(t4, 0.02)
+    enemy = (Monster.monster_spawn(level))  #stored the return value (class object) of the function in a new variale to be reused in fight function
+    print("\n" + "You encounter some dangerous looking " + enemy.name)
+    battle_choices(hero, enemy)
+
+
+def battle_choices(hero, enemy):
+    battle_map = {1: "attack", 2: "flee", 3: "potion"}
+    print_options(battle_map)
+    battle_action = battle_map.get(input_int())
+    if battle_action == "attack":
+        fight(hero, enemy)  # launches battle
+    elif battle_action == "flee":
+        flee(hero, enemy)  # attemps to flee the battle room
+    elif battle_action == "potion":
+        potion(hero, enemy)  # allows hero to consume potions
+    else:
+        print("Please select a valid input...")
         battle_choices(hero, enemy)
 
-    def battle_choices(hero, enemy):
-        print(
-            "1. Attack"
-            + "\n"
-            + "2. Flee"
-            + "\n"
-            + "3. Potion"
-            + "\n"
-            + "Your Turn!"
-            + "\n"
-        )  # make functions for 2 and 3
-        battle_action = input(
-            str("->")
-        )  # validate input for incorrect options
-        if battle_action == "1":
-            fight(hero, enemy)
-        elif battle_action == "2":
-            flee(hero, enemy)  # attemps to flee the battle room
-        elif battle_action == "3":
-            potion(hero, enemy)  # allows hero to consume potions
+    return hero
+
+
+def fight(hero, enemy):
+    initiative = roll() + hero.agility
+    hero.print_status()
+    print("\n" + "\n" + "--------battle-------")
+    print(
+        enemy.name
+        + " health: "
+        + str(enemy.health)
+        + "/"
+        + str(enemy.hp)
+        + "\n"
+    )
+    if initiative > 50:
+        hero_hit = roll()
+        if hero_hit < (
+            hero.hit_chance - enemy.defense
+        ):  # factors if the hit is successful based on hit chance and monster defense
+            crit_proc = hero.crit_check()
+            attack_damage = int(
+                random.randint(
+                    int(0.8 * hero.damage), int((hero.damage) * crit_proc)
+                )
+            )
+            print("You hit for {} damage".format(attack_damage))
+            enemy.health -= attack_damage
         else:
-            print("Please s2elect a valid input...")
-            battle_choices(hero, enemy)
-
-    def fight(hero, enemy):
-        initiative = roll() + hero.agility
-        hero.status()
-        print("\n" + "\n" + "--------battle-------")
-        print(
-            enemy.name
-            + " health: "
-            + str(enemy.hp)
-            + "/"
-            + str(enemy.max_hp)
-            + "\n"
-        )
-        if initiative > 50:
-            hero_hit = roll()
-            if hero_hit < (
-                hero.hit_chance - enemy.defense
-            ):  # factors if the hit is successful based on hit chance and monster defense
-                crit_proc = hero.crit_check()
-                attack_damage = int(
-                    random.randint(
-                        int(0.8 * hero.damage), int((hero.damage) * crit_proc)
-                    )
+            print("You swing wildly and miss...")
+        enemy_hit = roll()
+        if enemy_hit < (
+            enemy.hit_chance - hero.defense
+        ):  # factors if the hit is successful based on hit chance and hero defense
+        # should have been a common function in parent class
+            crit_enemy = enemy.crit_check()
+            enemy_damage = int(
+                random.randint(
+                    int(0.8 * enemy.damage),
+                    int((enemy.damage) * crit_enemy),
                 )
-                print("You hit for {} damage".format(attack_damage))
-                enemy.hp -= attack_damage
-            else:
-                print("You swing wildly and miss...")
-            enemy_hit = roll()
-            if enemy_hit < (
-                enemy.hit_chance - hero.defense
-            ):  # factors if the hit is successful based on hit chance and hero defense
-                crit_enemy = enemy.crit_check(
-                    enemy
-                )  # should have been a common function in parent class
-                enemy_damage = int(
-                    random.randint(
-                        int(0.8 * enemy.damage),
-                        int((enemy.damage) * crit_enemy),
-                    )
-                )
-                print("You take {} damage".format(enemy_damage) + "\n")
-                hero.hp -= enemy_damage
-            else:
-                print("You successfully dodge the attack" + "\n")
+            )
+            print("You take {} damage".format(enemy_damage) + "\n")
+            hero.health -= enemy_damage
         else:
-            enemy_hit = roll()
-            if enemy_hit < (
-                enemy.hit_chance - hero.defense
-            ):  # factors if the hit is successful based on hit chance and hero defense
-                crit_enemy = enemy.crit_check(
-                    enemy
-                )  # should have been a common function in parent class
-                enemy_damage = int(
-                    random.randint(
-                        int(0.8 * enemy.damage),
-                        int((enemy.damage) * crit_enemy),
-                    )
+            print("You successfully dodge the attack" + "\n")
+    else:
+        enemy_hit = roll()
+        if enemy_hit < (enemy.hit_chance - hero.defense): 
+            crit_enemy = enemy.crit_check()
+            enemy_damage = int(
+                random.randint(
+                    int(0.8 * enemy.damage),
+                    int((enemy.damage) * crit_enemy),
                 )
-                print("You take {} damage".format(enemy_damage) + "\n")
-                hero.hp -= enemy_damage
-            else:
-                print("You successfully dodge the attack" + "\n")
-            hero_hit = roll()
-            if hero_hit < (
-                hero.hit_chance - enemy.defense
-            ):  # factors if the hit is successful based on hit chance and monster defense
-                crit_proc = hero.crit_check()
-                attack_damage = int(
-                    random.randint(
-                        int(0.8 * hero.damage), int((hero.damage) * crit_proc)
-                    )
-                )
-                print("You hit for {} damage".format(attack_damage) + "\n")
-                enemy.hp -= attack_damage
-            else:
-                print("You swing wildly and miss..." + "\n")
-        if hero.hp <= 0:
-            hero.death()  # handles death
-        elif enemy.hp <= 0:
-            battle_room_success(
-                hero, enemy
-            )  # code a common function for clearing battle room that levels you up, drops loot, resets room handler, takes you to next level
+            )
+            print("You take {} damage".format(enemy_damage) + "\n")
+            hero.health -= enemy_damage
         else:
-            battle_choices(hero, enemy)
+            print("You successfully dodge the attack" + "\n")
+        hero_hit = roll()
+        if hero_hit < (
+            hero.hit_chance - enemy.defense
+        ):  # factors if the hit is successful based on hit chance and monster defense
+            crit_proc = hero.crit_check()
+            attack_damage = int(
+                random.randint(
+                    int(0.8 * hero.damage), int((hero.damage) * crit_proc)
+                )
+            )
+            print("You hit for {} damage".format(attack_damage) + "\n")
+            enemy.health -= attack_damage
+        else:
+            print("You swing wildly and miss..." + "\n")
+    if hero.health <= 0:
+        hero.death()  # handles death
+    elif enemy.health <= 0:
+        battle_room_success(
+            hero, enemy
+        ) 
+    else:
+        battle_choices(hero, enemy)
 
-    def battle_room_success(hero, enemy):
-        t5 = "You have cleared level " + str(level) + "!" + "\n"
-        write_cool(t5, 0.02)
-        print("Your greed bonus has increased")
-        print(" ")
-        input("Press any key to continue...")
-        hero.status()
-        hero.greed += 0.10
-        print("\n" + "Greed bonus has increased by 10%")
-        wealth_drop(enemy, 1)  # pending
-        # potion_drop create a potion drop function which drops heals across rooms based on room type and level
-        # level_handler() #Create a function that progresses the game across levels 1-5
-        # inventory allow player to change inventory
+def battle_room_success(hero, enemy):
+    level = LEVEL
+    t5 = "You have cleared the level" + "\n"
+    print_slow(t5, 0.02)
+    print(" ")
+    input("Press any key to continue...")
+    hero.greed += 10
+    print("\n" + "Greed bonus has increased! You have higher chances of finding wealth...")
+    monster_drop(enemy,hero)  # done for coins and wealth
+    hero.print_status()
 
-    def monster_drop(enemy): #complete this
-        global level
-        coin_drop_chance = int(enemy.lootchance_coins) #takes the chance of the monster to drop coins
-        if roll() <= coin_drop_chance:
-            coin_drops_level = coin_list.loc[coin_list['Level'] == level] #gets all dropabble coins for the current level
-            coin_roll = roll() - hero.greed #rolls to see which drops you can get, factors greed
-            coin_drops = coin_drops_level.loc[coin_drops_level['Rarity'] >= coin_roll] #makes a df of all dropabble items
-            coin_drops = coin_drops.sample() #takes a random drop from above dataframe
-            hero.coins += int(coin_drops['Amount']) #adds coins to hero's inventory
-            print('The monster drops ' + str(coin_drops.iloc[0,0]) + ' coins')
-            print('Current coins: ' + str(hero.coins))
+    # level_handler() #Create a function that progresses the game across levels 1-5
+    # inventory allow player to change inventory
 
-        wealth_drop_chance = int(enemy.lootchance_wealth) #takes the chance of the monster to drop coins    
-        if roll() <= wealth_drop_chance:
-            wealth_drops_level = wealth_list.loc[wealth_list['Level'] == level] #gets all dropabble coins for the current level
-            wealth_roll = random.randint(1,101) - hero.greed #rolls to see which drops you can get, factors greed
-            wealth_drops = wealth_drops_level.loc[wealth_drops_level['Rarity'] >= wealth_roll] #makes a df of all dropabble items
-            if wealth_drops.empty:
-                pass
+   
+
+def potion(hero, enemy):
+    while (
+        hero.pots["small"] > 0
+        or hero.pots["medium"] > 0
+        or hero.pots["large"] > 0
+    ):
+        print("Your Potions:")
+        print("1. Small - " + str(hero.pots["small"]))
+        print("2. Medium - " + str(hero.pots["medium"]))
+        print("3. Large - " + str(hero.pots["large"]))
+        consume_pot = input(str("-->" + "\n"))
+
+        if consume_pot == "1":
+            if hero.pots["small"] > 0:
+                hero.health += 5
+                print("You consume a potion and heal 5 HP")
+                hero.pots["small"] = hero.pots["small"] - 1
+                if hero.health > hero.hp:
+                    hero.health = hero.hp
+                battle_choices(hero, enemy)
             else:
-                wealth_drops = wealth_drops.sample() #takes a random drop from above dataframe
-                hero.wealth.append(wealth_drops.iloc[0,0])
-                print('The monster drops a ' + str(wealth_drops.iloc[0,0]))
-                print(hero.wealth)
-            
-    def potion(hero, enemy):
-        while (
-            hero.pots["small"] > 0
-            or hero.pots["medium"] > 0
-            or hero.pots["large"] > 0
-        ):
-            print("Your Potions:")
-            print("1. Small - " + str(hero.pots["small"]))
-            print("2. Medium - " + str(hero.pots["medium"]))
-            print("3. Large - " + str(hero.pots["large"]))
-            consume_pot = input(str("-->" + "\n"))
+                print("You do not have any small potions!")
+                battle_choices(hero, enemy)
+            break
 
-            if consume_pot == "1":
-                if hero.pots["small"] > 0:
-                    hero.hp += 5
-                    print("You consume a potion and heal 5 HP")
-                    hero.pots["small"] = hero.pots["small"] - 1
-                    if hero.hp > hero.hp:
-                        hero.hp = hero.hp
-                    battle_choices(hero, enemy)
-                else:
-                    print("You do not have any small potions!")
-                    battle_choices(hero, enemy)
-                break
-
-            elif consume_pot == "2":
-                if hero.pots["medium"] > 0:
-                    hero.hp += 15
-                    print("You consume a potion and heal 15 HP")
-                    hero.pots["medium"] = hero.pots["medium"] - 1
-                    if hero.hp > hero.hp:
-                        hero.hp = hero.hp
-                    battle_choices(hero, enemy)
-                else:
-                    print("You do not have any medium potions!")
-                    battle_choices(hero, enemy)
-
-            elif consume_pot == "3":
-                if hero.pots["large"] > 0:
-                    hero.hp += 30
-                    print("You consume a potion and heal 30 HP")
-                    hero.pots["large"] = hero.pots["large"] - 1
-                    if hero.hp > hero.hp:
-                        hero.hp = hero.hp
-                    battle_choices(hero, enemy)
-                else:
-                    print("You do not have any large potions!")
-                    battle_choices(hero, enemy)
-                break
-
+        elif consume_pot == "2":
+            if hero.pots["medium"] > 0:
+                hero.health += 15
+                print("You consume a potion and heal 15 HP")
+                hero.pots["medium"] = hero.pots["medium"] - 1
+                if hero.health > hero.hp:
+                    hero.health = hero.hp
+                battle_choices(hero, enemy)
             else:
-                print("Please select a valid input...")
+                print("You do not have any medium potions!")
                 battle_choices(hero, enemy)
 
+        elif consume_pot == "3":
+            if hero.pots["large"] > 0:
+                hero.health += 30
+                print("You consume a potion and heal 30 HP")
+                hero.pots["large"] = hero.pots["large"] - 1
+                if hero.health > hero.hp:
+                    hero.health = hero.hp
+                battle_choices(hero, enemy)
+            else:
+                print("You do not have any large potions!")
+                battle_choices(hero, enemy)
+            break
+
         else:
-            print("You do not have any potions...")
+            print("Please select a valid input...")
             battle_choices(hero, enemy)
 
-    def flee(hero, enemy):
-        t6 = "Trying to escape the room..."
-        write_cool(t6, 0.02)
-        flee_roll = 50 + hero.agility
-        if roll() < flee_roll:
-            print("You successfully escape from the " + enemy.name)
-            junction()
+    else:
+        print("You do not have any potions...")
+        battle_choices(hero, enemy)
+
+def flee(hero, enemy):
+    t6 = "Trying to escape the room..."
+    print_slow(t6, 0.02)
+    flee_roll = 50 + hero.agility
+    if roll() < flee_roll:
+        print("You successfully escape from the " + enemy.name)
+        junction()
+    else:
+        print("You can't find a way out!")
+        enemy_hit = roll()
+        if enemy_hit < (
+            enemy.hit_chance - hero.defense
+        ):  # factors if the hit is successful based on hit chance and hero defense
+            crit_enemy = enemy.crit_check(
+                enemy
+            )  # should have been a common function in parent class
+            enemy_damage = int(
+                random.randint(
+                    int(0.8 * enemy.damage),
+                    int((enemy.damage) * crit_enemy),
+                )
+            )
+            print(
+                "The "
+                + enemy.name
+                + " attack you for "
+                + str(enemy_damage)
+                + " damage"
+            )
+            hero.hp -= enemy_damage
+            hero.print_status()
+            battle_choices(hero, enemy)
+            if hero.hp <= 0:
+                hero.death()
         else:
-            print("You can't find a way out!")
-            enemy_hit = roll()
-            if enemy_hit < (
-                enemy.hit_chance - hero.defense
-            ):  # factors if the hit is successful based on hit chance and hero defense
-                crit_enemy = enemy.crit_check(
-                    enemy
-                )  # should have been a common function in parent class
-                enemy_damage = int(
-                    random.randint(
-                        int(0.8 * enemy.damage),
-                        int((enemy.damage) * crit_enemy),
-                    )
-                )
-                print(
-                    "The "
-                    + enemy.name
-                    + " attack you for "
-                    + str(enemy_damage)
-                    + " damage"
-                )
-                hero.hp -= enemy_damage
-                hero.status()
-                battle_choices(hero, enemy)
-                if hero.hp <= 0:
-                    hero.death()
-            else:
-                print("You dodge an incoming attack" + "\n")
-                battle_choices(hero, enemy)
-
-    # Gameplay begins
-    hero = Hero.hero_setup()
-    junction()
-    # wealth_drop()
+            print("You dodge an incoming attack" + "\n")
+            battle_choices(hero, enemy)
 
 
-if __name__ == "__main__":
-    main()

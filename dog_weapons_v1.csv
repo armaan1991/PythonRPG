@@ -1,0 +1,7 @@
+Name,Level,Rarity,Category,Min_damage,Max_damage,Hit_chance,Crit_chance,Crit_multi,Attack_speed,Special_attack,Special_cost
+Elven Bow,0,0,weapons,5,8,80,10,1.5,1,0,0
+Midnight Dagger,0,0,weapons,3,10,90,10,1.5,1,0,0
+Warlock Wand,0,0,weapons,4,9,85,10,1.5,1,0,0
+Arrowsong Bow,1,100,weapons,18,26,80,15,2,1.25,Symphony of death,50
+Vanishing Blade,1,100,weapons,13,25,90,20,1.6,1.25,Double trouble,50
+Heretic's Staff,1,100,weapons,10,30,85,25,1.75,1.25,Torment,50
